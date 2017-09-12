@@ -1,6 +1,12 @@
 #!/usr/bin/python3
 
-import sys, os
+"""Python3 cgi for face messenger chat bot
+
+This cgi will always return same context from sender
+"""
+
+import sys
+import os
 import codecs
 import json
 import logging
@@ -10,13 +16,14 @@ import urllib.request
 VERIFY_TOKEN = 'TOKEN'
 PAGE_ACCESS_TOKEN = 'TOKEN'
 
-def parse_query():
+def _parse_query():
     from urllib import parse
     url = os.environ["REQUEST_URI"]
     query = parse.parse_qs(parse.urlparse(url).query)
     return query
 
 def send_text_message(sender_id, text):
+    """Send text to sender_id"""
     logging.debug("send message")
     logging.debug(text)
     url = 'https://graph.facebook.com/v2.6/me/messages'
@@ -29,7 +36,7 @@ def send_text_message(sender_id, text):
     result = response.read()
     logging.debug(result)
 
-def received_message(event):
+def _received_message(event):
     logging.debug('message received')
     if 'text' in event['message'] and event['message']['text']:
         send_text_message(event['sender']['id'], event['message']['text'])
@@ -38,9 +45,10 @@ def received_message(event):
         logging.debug('non-text received')
 
 def main():
+    """Cgi main function """
     print("Content-Type: text/html")
     print("")
-    query = parse_query()
+    query = _parse_query()
     logging.debug(query)
     if 'hub.mode' in query and 'hub.verify_token' in query and 'hub.challenge' in query:
         if 'subscribe' in query['hub.mode'] and VERIFY_TOKEN in query['hub.verify_token']:
@@ -49,11 +57,11 @@ def main():
     raw_data = sys.stdin.read()
     logging.debug(raw_data)
     form = json.loads(raw_data)
-    if 'page' == form['object']:
+    if form['object'] == 'page':
         for entry in form['entry']:
             for event in entry['messaging']:
                 if 'message' in event:
-                    received_message(event)
+                    _received_message(event)
                     return
                 else:
                     logging.info("Received unknown event")
@@ -67,4 +75,3 @@ with open("chatbot.err", "a") as log:
     logging.basicConfig(filename='chatbot.log', level=logging.DEBUG)
     sys.stderr = log
     main()
-
