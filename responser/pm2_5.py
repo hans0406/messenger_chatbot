@@ -60,7 +60,7 @@ class PmDb(object):
     def __init__(self, titles, intervals):
         self._titles = titles
         self._pm_db = {interval: PmQueueList(len(titles)) for interval in intervals}
-        self.avg = {interval: 0 for interval in intervals}
+        self.avg = {interval: [0]*len(titles) for interval in intervals}
 
     def push(self, pm_list):
         now = time.time()

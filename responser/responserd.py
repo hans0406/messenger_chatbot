@@ -4,11 +4,14 @@ import socket
 import threading
 import logging
 import json
+import time
+import servomotor
 import response
 import thermometer
 import camera
 import pm2_5
 import config
+import light
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -25,6 +28,14 @@ def handle_request(client_socket):
         response.response_text(sender_id, pm2_5.PM_DB.discription())
     elif u'temp' in text or u'tmp' in text:
         thermometer.response_temperature(sender_id)
+    elif u'turn left' in text:
+        servomotor.turn_left()
+    elif u'turn right' in text:
+        servomotor.turn_right()
+    elif u'light on' in text:
+        light.on()
+    elif u'light off' in text:
+        light.off()
     else:
         response.response_text(sender_id, "Try: picture, PM2.5, temperature.")
 
@@ -46,6 +57,28 @@ def run_server(bind_ip, bind_port):
 def main():
     run_server(config.BIND_IP, config.BIND_PORT)
     pm2_5.start_sensor()
+    need_check = True
+    while True:
+        time.sleep(60)
+        if time.localtime().tm_hour in (8, 12, 16, 20):
+            if need_check == True:
+                print "==============check PM avg==============="
+                print pm2_5.PM_DB.avg
+                pm_1hr = pm2_5.PM_DB.avg[60][1]
+                pm_10hr = pm2_5.PM_DB.avg[600][1]
+                msg = None
+                if pm_1hr > 55 or pm_10hr > 55:
+                    msg = 'Air quality: RED - Unhealthy'
+                elif pm_1hr > 30 or pm_10hr > 30:
+                    msg = 'Air quality: Orange - Unhealthy for Sensitive Groups'
+                elif pm_1hr > 12 or pm_10hr > 12:
+                    msg = 'Air quality: Yellow - Moderate'
+                if msg is not None:
+                    for id in config.MESSGENGER_ID_LIST:
+                        response.response_text(id, msg)
+            need_check = False
+        else:
+            need_check = True
 
 if __name__ == '__main__':
     main()
