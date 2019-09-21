@@ -24,8 +24,11 @@ def notify_responser(request):
     client.close()
 
 def parse_query():
-    url = os.environ["REQUEST_URI"]
-    query = parse.parse_qs(parse.urlparse(url).query)
+    try:
+        url = os.environ["REQUEST_URI"]
+        query = parse.parse_qs(parse.urlparse(url).query)
+    except KeyError as e:
+        query = {}
     return query
 
 def send_text_message(sender_id, text):
