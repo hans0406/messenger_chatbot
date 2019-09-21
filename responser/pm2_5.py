@@ -7,6 +7,13 @@ import subprocess
 import time
 import threading
 import Queue
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(12, GPIO.OUT)
+GPIO.setup(16, GPIO.OUT)
+GPIO.setup(20, GPIO.OUT)
+GPIO.setup(21, GPIO.OUT)
 
 def get_pm():
     count = lower = 0
@@ -84,6 +91,27 @@ def sensor_thread():
     while True:
         if SENSOR.inWaiting() > 50:
             PM_DB.push(get_pm()[1:])
+            x = (PM_DB.avg[1][0]+4) / 4
+            #print("PM2.5 = " + str(PM_DB.avg[1][0]))
+            GPIO.output(12, GPIO.LOW)
+            GPIO.output(16, GPIO.LOW)
+            GPIO.output(20, GPIO.LOW)
+            GPIO.output(21, GPIO.LOW)
+            time.sleep(0.2)
+            if x % 2 is 1 or x is 0:
+                GPIO.output(12, GPIO.HIGH)
+            x = x / 2
+            if x % 2 is 1:
+                GPIO.output(16, GPIO.HIGH)
+            x = x / 2
+            if x % 2 is 1:
+                GPIO.output(20, GPIO.HIGH)
+            if x > 1:
+                GPIO.output(21, GPIO.HIGH)
+            if x > 2:
+                GPIO.output(12, GPIO.HIGH)
+                GPIO.output(16, GPIO.HIGH)
+                GPIO.output(20, GPIO.HIGH)
 
 def start_sensor():
     server_handler = threading.Thread(target=sensor_thread, args=tuple())
@@ -94,3 +122,6 @@ subprocess.call(["systemctl", "disable", "serial-getty@ttyS0.service"])
 SENSOR = serial.Serial("/dev/ttyS0", baudrate=9600, bytesize=8,
                        parity='N', stopbits=1, xonxoff=0, timeout=3.0)
 PM_DB = PmDb(['PM2.5', 'PM10'], [1, 60, 600])
+
+if __name__ == "__main__":
+    start_sensor()
