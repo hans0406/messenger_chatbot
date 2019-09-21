@@ -5,7 +5,7 @@
 import RPi.GPIO as GPIO
 import time
 
-SERVO = 12
+SERVO = 26
 ANGLE = 2.5
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(SERVO, GPIO.OUT)
