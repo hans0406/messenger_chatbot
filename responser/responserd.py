@@ -28,9 +28,9 @@ def handle_request(client_socket):
         response.response_text(sender_id, pm2_5.PM_DB.discription())
     elif u'temp' in text or u'tmp' in text:
         thermometer.response_temperature(sender_id)
-    elif u'turn left' in text:
+    elif u'left' in text:
         servomotor.turn_left()
-    elif u'turn right' in text:
+    elif u'right' in text:
         servomotor.turn_right()
     elif u'light on' in text:
         light.on()
